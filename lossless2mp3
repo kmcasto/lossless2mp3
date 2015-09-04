@@ -1,0 +1,109 @@
+#!/usr/bin/python
+# This file is part of lossless2mp3.
+#
+# lossless2mp3 is free software: you can redistribute it and / or modify it
+# under the terms of the GNU General Public License as published by the
+# Free Software Foundation, either version 3 of the License, or (at your
+# option) any later version.
+#
+# lossless2mp3 is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+# for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with lossless2mp3. If not, see <http://www.gnu.org/licenses/>.
+
+import fnmatch
+import os, sys, re, string
+from subprocess import call
+import glob
+from ideabulbs.io import helpers
+from ideabulbs.io.helpers import File
+
+if len(sys.argv)<2:
+    print "Usage: lossless2mp3 <directory-to-search-from>"
+    print "The script searches and converts recursively!"
+    sys.exit(1)
+
+flac_matches = helpers.get_recursive_matches(sys.argv[1], "*.flac")
+ape_matches =  helpers.get_recursive_matches(sys.argv[1], "*.ape")
+tta_matches = helpers.get_recursive_matches(sys.argv[1], "*.tta")
+matches =  flac_matches +  ape_matches + tta_matches
+
+print matches
+
+for match in matches:
+    lossless_file = File(match)
+    wav_file = File(re.sub("\.flac$", ".wav", match))
+    wav_file = File(re.sub("\.ape$", ".wav", match))
+    wav_file = File(re.sub("\.tta$", ".wav", match))
+    mp3_file = File(re.sub("\.flac$", ".mp3", match))
+    mp3_file = File(re.sub("\.ape$", ".mp3", match))
+    mp3_file = File(re.sub("\.tta$", ".mp3", match))
+    print mp3_file.exists()
+    flac_path = lossless_file.get_directory()
+    cue_files = helpers.get_recursive_matches(lossless_file.get_directory(), "*.cue")
+    cue_file = None
+    if len(cue_files) < 1:
+        print "No cue file found for " + lossless_file.get_full_name()
+        continue
+    else:
+        cue_file = File(cue_files[0])
+
+    try:
+        operation_ok=True
+        result = 1
+        if lossless_file.get_extension() == ".flac":
+            result=call(["nice", "-n", "19", "flac", "-d", lossless_file.get_full_name()])
+        elif lossless_file.get_extension() == ".ape":
+            result=call(["nice", "-n", "19", "jmac", "d", lossless_file.get_full_name(),  wav_file.get_full_name()])
+	elif lossless_file.get_extension() == ".tta":
+	    result=call(["nice", "-n", "19", "ffmpeg", "-i", lossless_file.get_full_name(), wav_file.get_full_name()])
+ 
+        if result <> 0:
+            operation_ok=False
+            print "Error occured while decompressing the lossless file"
+            with open("error_decompress.txt", "a") as myErrorFile:
+                myErrorFile.write(sys.argv[1] + "\n")
+            continue
+
+        result=call(["nice", "-n", "19", "lame", "-V 0", "--vbr-new", wav_file.get_full_name(), mp3_file.get_full_name()])
+
+        if result <> 0:
+            operation_ok=False
+            print "Error occured while compressing wav to MP3"
+            with open("error_compress.txt", "a") as myErrorFile:
+                myErrorFile.write(sys.argv[1] + "\n")
+            call(["rm", "-rf", wav_file.get_full_name()]) 
+            continue
+
+        result=call(["nice", "-n", "19",
+                     "mp3splt",
+                     "-o",
+                     "@n [@A] @t",
+                     "-c",
+                     cue_file.get_full_name(),
+                     mp3_file.get_full_name()
+                   ])
+
+        if result <> 0:
+            operation_ok=False
+            print "Error occured while splitting the mp3"
+            with open("error_split.txt", "a") as myErrorFile:
+                myErrorFile.write(sys.argv[1] + "\n")
+            call(["rm", "-rf", mp3_file.get_full_name()])
+            call(["rm", "-rf", wav_file.get_full_name()])
+            continue
+	
+	print "HI HI HI HI"
+
+        if operation_ok:
+            call(["rm", "-rf", mp3_file.get_full_name()])
+            call(["rm", "-rf", wav_file.get_full_name()])
+            call(["rm", "-rf", lossless_file.get_full_name()])
+            continue
+
+    except Exception,  e:
+        print "Exception!", e
+        pass
