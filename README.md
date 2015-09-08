@@ -19,6 +19,6 @@ ffmpeg for .tta
 
 ## Usage
 
-lossless2mp3 <directory-to-search-from>
+lossless2mp3 &lt;directory-to-search-from&gt;
 
 
