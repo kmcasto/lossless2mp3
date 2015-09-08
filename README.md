@@ -3,7 +3,7 @@ Recursively traverses directories and converts lossless music to mp3 format with
 
 Modified from - https://code.google.com/p/lossless2mp3/ 
 
-# Requires
+## Requires
 
 nice
 lame
@@ -12,7 +12,7 @@ flac for .flac conversion
 jmac for .ape
 ffmpeg for .tta
 
-# Usage
+## Usage
 
 lossless2mp3 <directory-to-search-from>
 
