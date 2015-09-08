@@ -5,17 +5,12 @@ Modified from - https://code.google.com/p/lossless2mp3/
 
 ## Requires
 
-nice
-
-lame
-
-mp3splt
-
-flac for .flac conversion
-
-jmac for .ape
-
-ffmpeg for .tta
+* nice
+* lame
+* mp3splt
+* flac for .flac conversion
+* jmac for .ape
+* ffmpeg for .tta
 
 ## Usage
 
