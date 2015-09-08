@@ -96,8 +96,6 @@ for match in matches:
             call(["rm", "-rf", wav_file.get_full_name()])
             continue
 	
-	print "HI HI HI HI"
-
         if operation_ok:
             call(["rm", "-rf", mp3_file.get_full_name()])
             call(["rm", "-rf", wav_file.get_full_name()])
